@@ -5,7 +5,6 @@ Run with: streamlit run routes_app.py
 """
 
 import streamlit as st
-import webbrowser
 from urllib.parse import quote
 
 # Market-to-recipients mapping
@@ -74,18 +73,6 @@ def generate_email(removed_addresses, added_addresses):
     body += "Please let me know if you have any questions.\n\nBest regards"
     return subject, body
 
-def open_gmail_compose(subject, body, recipients=None):
-    """Open Gmail compose window in browser with pre-filled content."""
-    encoded_subject = quote(subject)
-    encoded_body = quote(body)
-    gmail_url = f"https://mail.google.com/mail/?view=cm&fs=1&su={encoded_subject}&body={encoded_body}"
-
-    if recipients:
-        encoded_recipients = quote(','.join(recipients))
-        gmail_url += f"&to={encoded_recipients}"
-
-    webbrowser.open(gmail_url)
-
 # Streamlit UI
 st.set_page_config(page_title="Property Route Email Generator", page_icon="🏠", layout="wide")
 
@@ -149,9 +136,28 @@ if st.button("📧 Generate Email & Open Gmail", type="primary", use_container_w
             st.markdown(f"**Subject:** {subject}")
             st.text(body)
 
-        # Open Gmail
-        open_gmail_compose(subject, body, recipients)
-        st.info("🌐 Opening Gmail in your browser...")
+        # Create Gmail URL and open in browser
+        encoded_subject = quote(subject)
+        encoded_body = quote(body)
+        gmail_url = f"https://mail.google.com/mail/?view=cm&fs=1&su={encoded_subject}&body={encoded_body}"
+
+        if recipients:
+            encoded_recipients = quote(','.join(recipients))
+            gmail_url += f"&to={encoded_recipients}"
+
+        # Use HTML/JavaScript to open in client browser
+        st.components.html(
+            f"""
+            <script>
+                window.open("{gmail_url}", "_blank");
+            </script>
+            """,
+            height=0,
+        )
+
+        # Also provide a clickable link as backup
+        st.markdown(f"### [📧 Click here if Gmail didn't open]({gmail_url})")
+        st.success("✅ Gmail should open in a new tab!")
 
 # Footer
 st.markdown("---")
