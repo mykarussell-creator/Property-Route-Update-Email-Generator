@@ -136,7 +136,7 @@ if st.button("📧 Generate Email & Open Gmail", type="primary", use_container_w
             st.markdown(f"**Subject:** {subject}")
             st.text(body)
 
-        # Create Gmail URL and open in browser
+        # Create Gmail URL
         encoded_subject = quote(subject)
         encoded_body = quote(body)
         gmail_url = f"https://mail.google.com/mail/?view=cm&fs=1&su={encoded_subject}&body={encoded_body}"
@@ -145,19 +145,9 @@ if st.button("📧 Generate Email & Open Gmail", type="primary", use_container_w
             encoded_recipients = quote(','.join(recipients))
             gmail_url += f"&to={encoded_recipients}"
 
-        # Use HTML/JavaScript to open in client browser
-        st.components.html(
-            f"""
-            <script>
-                window.open("{gmail_url}", "_blank");
-            </script>
-            """,
-            height=0,
-        )
-
-        # Also provide a clickable link as backup
-        st.markdown(f"### [📧 Click here if Gmail didn't open]({gmail_url})")
-        st.success("✅ Gmail should open in a new tab!")
+        # Provide clickable link to open Gmail
+        st.success("✅ Email generated! Click the button below to open Gmail:")
+        st.markdown(f'<a href="{gmail_url}" target="_blank"><button style="background-color: #4CAF50; color: white; padding: 15px 32px; text-align: center; font-size: 16px; border: none; border-radius: 4px; cursor: pointer;">📧 Open in Gmail</button></a>', unsafe_allow_html=True)
 
 # Footer
 st.markdown("---")
