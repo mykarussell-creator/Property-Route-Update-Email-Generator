@@ -126,58 +126,88 @@ if uploaded_file is not None:
             st.dataframe(df.head())
 
         if st.button("📥 Import Today's Updates", type="primary"):
-            # Get today's date in YYYY-MM-DD format
-            today = datetime.now().strftime('%Y-%m-%d')
+            with st.spinner("Processing CSV..."):
+                # Get today's date in YYYY-MM-DD format
+                today = datetime.now().strftime('%Y-%m-%d')
+                st.info(f"🗓️ Looking for updates dated: {today}")
 
-            # Convert date columns to string for comparison
-            df['Date Added'] = df['Date Added'].astype(str)
-            df['Date for Removal'] = df['Date for Removal'].astype(str)
+                # Show column names for debugging
+                with st.expander("🔍 Debug: CSV Columns", expanded=False):
+                    st.write("Columns found in CSV:")
+                    for col in df.columns:
+                        st.code(f"'{col}'")
 
-            # Filter for today's adds and removes
-            df_add_today = df[df['Date Added'] == today]
-            df_remove_today = df[df['Date for Removal'] == today]
+                # Convert date columns to string for comparison
+                df['Date Added'] = df['Date Added'].astype(str)
+                df['Date for Removal'] = df['Date for Removal'].astype(str)
 
-            # Group by market
-            markets_with_updates = set()
-            imported_data = {}
+                # Show unique dates for debugging
+                with st.expander("🔍 Debug: Dates in CSV", expanded=False):
+                    st.write("Unique 'Date Added' values:")
+                    unique_added = df['Date Added'].unique()
+                    for date in unique_added:
+                        if date != 'nan' and date != '':
+                            match = "✅ MATCH!" if date == today else "❌ No match"
+                            st.code(f"{date} {match}")
 
-            # Process additions by market
-            for market in df_add_today['Market'].unique():
-                markets_with_updates.add(market)
-                if market not in imported_data:
-                    imported_data[market] = {'add': [], 'remove': []}
+                    st.write("\nUnique 'Date for Removal' values:")
+                    unique_removed = df['Date for Removal'].unique()
+                    for date in unique_removed:
+                        if date != 'nan' and date != '':
+                            match = "✅ MATCH!" if date == today else "❌ No match"
+                            st.code(f"{date} {match}")
 
-                market_adds = df_add_today[df_add_today['Market'] == market]
-                for _, row in market_adds.iterrows():
-                    imported_data[market]['add'].append({
-                        'address': row['Full Street Address (Including City, State, and Zip Code)'],
-                        'lockbox': row.get('Lockbox Code', ''),
-                        'gate': row.get('Gate Code', ''),
-                        'frequency': row.get('Frequency', '')
-                    })
+                # Filter for today's adds and removes
+                df_add_today = df[df['Date Added'] == today]
+                df_remove_today = df[df['Date for Removal'] == today]
 
-            # Process removals by market
-            for market in df_remove_today['Market'].unique():
-                markets_with_updates.add(market)
-                if market not in imported_data:
-                    imported_data[market] = {'add': [], 'remove': []}
+                st.write(f"📊 Found {len(df_add_today)} properties to add and {len(df_remove_today)} to remove for {today}")
 
-                market_removes = df_remove_today[df_remove_today['Market'] == market]
-                for _, row in market_removes.iterrows():
-                    imported_data[market]['remove'].append({
-                        'address': row['Full Street Address (Including City, State, and Zip Code)']
-                    })
+                if len(df_add_today) == 0 and len(df_remove_today) == 0:
+                    st.warning(f"⚠️ No properties found with today's date ({today}). Check the dates in your CSV file.")
+                    st.stop()
 
-            # Store in session state
-            st.session_state.imported_data = imported_data
+                # Group by market
+                markets_with_updates = set()
+                imported_data = {}
 
-            total_adds = len(df_add_today)
-            total_removes = len(df_remove_today)
+                # Process additions by market
+                for market in df_add_today['Market'].unique():
+                    markets_with_updates.add(market)
+                    if market not in imported_data:
+                        imported_data[market] = {'add': [], 'remove': []}
 
-            st.success(f"✅ Imported updates for {today}")
-            st.info(f"📊 Found updates for {len(markets_with_updates)} market(s): {', '.join(sorted(markets_with_updates))}")
-            st.info(f"   • {total_adds} properties to add\n   • {total_removes} properties to remove")
-            st.rerun()
+                    market_adds = df_add_today[df_add_today['Market'] == market]
+                    for _, row in market_adds.iterrows():
+                        imported_data[market]['add'].append({
+                            'address': row['Full Street Address (Including City, State, and Zip Code)'],
+                            'lockbox': row.get('Lockbox Code', ''),
+                            'gate': row.get('Gate Code', ''),
+                            'frequency': row.get('Frequency', '')
+                        })
+
+                # Process removals by market
+                for market in df_remove_today['Market'].unique():
+                    markets_with_updates.add(market)
+                    if market not in imported_data:
+                        imported_data[market] = {'add': [], 'remove': []}
+
+                    market_removes = df_remove_today[df_remove_today['Market'] == market]
+                    for _, row in market_removes.iterrows():
+                        imported_data[market]['remove'].append({
+                            'address': row['Full Street Address (Including City, State, and Zip Code)']
+                        })
+
+                # Store in session state
+                st.session_state.imported_data = imported_data
+
+                total_adds = len(df_add_today)
+                total_removes = len(df_remove_today)
+
+                st.success(f"✅ Imported updates for {today}")
+                st.info(f"📊 Found updates for {len(markets_with_updates)} market(s): {', '.join(sorted(markets_with_updates))}")
+                st.info(f"   • {total_adds} properties to add\n   • {total_removes} properties to remove")
+                st.rerun()
 
     except Exception as e:
         st.error(f"❌ Error reading CSV: {str(e)}")
