@@ -127,9 +127,10 @@ if uploaded_file is not None:
 
         if st.button("📥 Import Today's Updates", type="primary"):
             with st.spinner("Processing CSV..."):
-                # Get today's date in YYYY-MM-DD format
-                today = datetime.now().strftime('%Y-%m-%d')
-                st.info(f"🗓️ Looking for updates dated: {today}")
+                # Get today's date
+                today = datetime.now().date()
+                today_str = today.strftime('%Y-%m-%d')
+                st.info(f"🗓️ Looking for updates dated: {today_str}")
 
                 # Show column names for debugging
                 with st.expander("🔍 Debug: CSV Columns", expanded=False):
@@ -137,29 +138,67 @@ if uploaded_file is not None:
                     for col in df.columns:
                         st.code(f"'{col}'")
 
-                # Convert date columns to string for comparison
-                df['Date Added'] = df['Date Added'].astype(str)
-                df['Date for Removal'] = df['Date for Removal'].astype(str)
+                # Parse date columns - handle multiple formats
+                def parse_flexible_date(date_series):
+                    """Parse dates trying multiple formats"""
+                    # First try pandas automatic parsing
+                    parsed = pd.to_datetime(date_series, errors='coerce')
 
-                # Show unique dates for debugging
-                with st.expander("🔍 Debug: Dates in CSV", expanded=False):
-                    st.write("Unique 'Date Added' values:")
-                    unique_added = df['Date Added'].unique()
-                    for date in unique_added:
-                        if date != 'nan' and date != '':
-                            match = "✅ MATCH!" if date == today else "❌ No match"
-                            st.code(f"{date} {match}")
+                    # For any that failed, try specific formats
+                    failed_mask = parsed.isna() & date_series.notna()
+                    if failed_mask.any():
+                        formats_to_try = [
+                            '%Y-%m-%d',
+                            '%m/%d/%Y',
+                            '%m/%d/%y',
+                            '%Y-%m-%d %H:%M:%S',
+                            '%m/%d/%Y %H:%M:%S',
+                            '%m/%d/%Y %H:%M',
+                            '%d/%m/%Y',
+                            '%Y/%m/%d'
+                        ]
+                        for fmt in formats_to_try:
+                            still_failed = parsed.isna() & date_series.notna()
+                            if not still_failed.any():
+                                break
+                            try:
+                                parsed[still_failed] = pd.to_datetime(date_series[still_failed], format=fmt, errors='coerce')
+                            except:
+                                continue
+                    return parsed
 
-                    st.write("\nUnique 'Date for Removal' values:")
-                    unique_removed = df['Date for Removal'].unique()
-                    for date in unique_removed:
-                        if date != 'nan' and date != '':
-                            match = "✅ MATCH!" if date == today else "❌ No match"
-                            st.code(f"{date} {match}")
+                try:
+                    df['Date Added Parsed'] = parse_flexible_date(df['Date Added'])
+                    df['Date for Removal Parsed'] = parse_flexible_date(df['Date for Removal'])
+                except Exception as e:
+                    st.error(f"Error parsing dates: {str(e)}")
+                    st.stop()
 
-                # Filter for today's adds and removes
-                df_add_today = df[df['Date Added'] == today]
-                df_remove_today = df[df['Date for Removal'] == today]
+                # Show original and parsed dates for debugging
+                with st.expander("🔍 Debug: Date Parsing", expanded=True):
+                    st.write("**Original 'Date Added' values:**")
+                    for orig_date in df['Date Added'].dropna().unique()[:5]:
+                        st.code(f"Original: {orig_date}")
+
+                    st.write("\n**Parsed 'Date Added' values:**")
+                    unique_added = df['Date Added Parsed'].dropna().dt.date.unique()
+                    for date in unique_added[:10]:
+                        match = "✅ MATCH!" if date == today else "❌ No match"
+                        st.code(f"{date} {match}")
+
+                    st.write("\n**Original 'Date for Removal' values:**")
+                    for orig_date in df['Date for Removal'].dropna().unique()[:5]:
+                        st.code(f"Original: {orig_date}")
+
+                    st.write("\n**Parsed 'Date for Removal' values:**")
+                    unique_removed = df['Date for Removal Parsed'].dropna().dt.date.unique()
+                    for date in unique_removed[:10]:
+                        match = "✅ MATCH!" if date == today else "❌ No match"
+                        st.code(f"{date} {match}")
+
+                # Filter for today's adds and removes using parsed dates
+                df_add_today = df[df['Date Added Parsed'].dt.date == today]
+                df_remove_today = df[df['Date for Removal Parsed'].dt.date == today]
 
                 st.write(f"📊 Found {len(df_add_today)} properties to add and {len(df_remove_today)} to remove for {today}")
 
