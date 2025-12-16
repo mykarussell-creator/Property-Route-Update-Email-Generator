@@ -38,9 +38,17 @@ def test_csv_import(csv_file, market_filter='ALL'):
             df_filtered = df
             print(f"✓ No filter applied (ALL markets): {len(df_filtered)} rows")
 
-        # Separate by Status
-        df_add = df_filtered[df_filtered['Status'] == 'Add']
-        df_remove = df_filtered[df_filtered['Status'] == 'Remove']
+        # Separate by Status (either explicit Status column or inferred from dates)
+        if 'Status' in df_filtered.columns:
+            # Use explicit Status column if available
+            df_add = df_filtered[df_filtered['Status'] == 'Add']
+            df_remove = df_filtered[df_filtered['Status'] == 'Remove']
+            print(f"✓ Using explicit 'Status' column")
+        else:
+            # Infer status from Date Added and Date for Removal columns
+            df_add = df_filtered[df_filtered['Date for Removal'].isna() & df_filtered['Date Added'].notna()]
+            df_remove = df_filtered[df_filtered['Date for Removal'].notna()]
+            print(f"✓ Inferring status from 'Date Added' and 'Date for Removal' columns")
 
         print(f"\n{'─'*60}")
         print("REMOVED ADDRESSES:")
@@ -94,6 +102,10 @@ def test_csv_import(csv_file, market_filter='ALL'):
         traceback.print_exc()
 
 if __name__ == "__main__":
+    print("\n" + "="*60)
+    print("TESTING WITH EXPLICIT STATUS COLUMN")
+    print("="*60)
+
     # Test with PHX market
     print("\n🧪 TEST 1: PHX Market Only")
     test_csv_import('test_routes.csv', 'PHX')
@@ -105,3 +117,14 @@ if __name__ == "__main__":
     # Test with ALL markets
     print("\n🧪 TEST 3: ALL Markets")
     test_csv_import('test_routes.csv', 'ALL')
+
+    print("\n\n" + "="*60)
+    print("TESTING WITHOUT STATUS COLUMN (INFERRED FROM DATES)")
+    print("="*60)
+
+    # Test without Status column
+    print("\n🧪 TEST 4: PHX Market (No Status Column)")
+    test_csv_import('test_routes_no_status.csv', 'PHX')
+
+    print("\n🧪 TEST 5: ALL Markets (No Status Column)")
+    test_csv_import('test_routes_no_status.csv', 'ALL')

@@ -8,6 +8,7 @@ import streamlit as st
 from urllib.parse import quote
 import pandas as pd
 import io
+from datetime import datetime
 
 # Market-to-recipients mapping
 MARKET_RECIPIENTS = {
@@ -111,6 +112,10 @@ st.markdown("Generate property route update emails with automatic recipient look
 st.markdown("### 📁 Import CSV File")
 uploaded_file = st.file_uploader("Upload a CSV file with property route updates", type=['csv'])
 
+# Initialize imported data storage in session state
+if 'imported_data' not in st.session_state:
+    st.session_state.imported_data = {}
+
 if uploaded_file is not None:
     try:
         # Read CSV
@@ -120,49 +125,64 @@ if uploaded_file is not None:
         with st.expander("📊 CSV Preview", expanded=False):
             st.dataframe(df.head())
 
-        # Get market selection for filtering
-        st.markdown("### 🎯 Filter by Market")
-        csv_market = st.selectbox(
-            "Select Market to Import",
-            options=['ALL'] + sorted(MARKET_RECIPIENTS.keys()),
-            help="Choose a market to filter the imported data",
-            key="csv_market_select"
-        )
+        if st.button("📥 Import Today's Updates", type="primary"):
+            # Get today's date in YYYY-MM-DD format
+            today = datetime.now().strftime('%Y-%m-%d')
 
-        if st.button("📥 Import Data", type="primary"):
-            # Filter by market if not ALL
-            if csv_market != 'ALL':
-                df_filtered = df[df['Market'] == csv_market]
-            else:
-                df_filtered = df
+            # Convert date columns to string for comparison
+            df['Date Added'] = df['Date Added'].astype(str)
+            df['Date for Removal'] = df['Date for Removal'].astype(str)
 
-            # Separate by Status
-            df_add = df_filtered[df_filtered['Status'] == 'Add']
-            df_remove = df_filtered[df_filtered['Status'] == 'Remove']
+            # Filter for today's adds and removes
+            df_add_today = df[df['Date Added'] == today]
+            df_remove_today = df[df['Date for Removal'] == today]
 
-            # Populate session state for removed addresses
-            removed_addresses = df_remove['Full Street Address (Including City, State, and Zip Code)'].tolist()
-            st.session_state.csv_removed = '\n'.join(removed_addresses)
+            # Group by market
+            markets_with_updates = set()
+            imported_data = {}
 
-            # Populate session state for added addresses
-            added_addresses = df_add['Full Street Address (Including City, State, and Zip Code)'].tolist()
-            st.session_state.csv_added = '\n'.join(added_addresses)
+            # Process additions by market
+            for market in df_add_today['Market'].unique():
+                markets_with_updates.add(market)
+                if market not in imported_data:
+                    imported_data[market] = {'add': [], 'remove': []}
 
-            # Populate codes and frequency
-            lockbox_codes = df_add['Lockbox Code'].fillna('').tolist()
-            st.session_state.csv_lockbox = '\n'.join([str(code) for code in lockbox_codes])
+                market_adds = df_add_today[df_add_today['Market'] == market]
+                for _, row in market_adds.iterrows():
+                    imported_data[market]['add'].append({
+                        'address': row['Full Street Address (Including City, State, and Zip Code)'],
+                        'lockbox': row.get('Lockbox Code', ''),
+                        'gate': row.get('Gate Code', ''),
+                        'frequency': row.get('Frequency', '')
+                    })
 
-            gate_codes = df_add['Gate Code'].fillna('').tolist()
-            st.session_state.csv_gate = '\n'.join([str(code) for code in gate_codes])
+            # Process removals by market
+            for market in df_remove_today['Market'].unique():
+                markets_with_updates.add(market)
+                if market not in imported_data:
+                    imported_data[market] = {'add': [], 'remove': []}
 
-            frequency = df_add['Frequency'].fillna('').tolist()
-            st.session_state.csv_frequency = '\n'.join([str(freq) for freq in frequency])
+                market_removes = df_remove_today[df_remove_today['Market'] == market]
+                for _, row in market_removes.iterrows():
+                    imported_data[market]['remove'].append({
+                        'address': row['Full Street Address (Including City, State, and Zip Code)']
+                    })
 
-            st.success(f"✅ Imported {len(df_add)} properties to add and {len(df_remove)} to remove for market: {csv_market}")
+            # Store in session state
+            st.session_state.imported_data = imported_data
+
+            total_adds = len(df_add_today)
+            total_removes = len(df_remove_today)
+
+            st.success(f"✅ Imported updates for {today}")
+            st.info(f"📊 Found updates for {len(markets_with_updates)} market(s): {', '.join(sorted(markets_with_updates))}")
+            st.info(f"   • {total_adds} properties to add\n   • {total_removes} properties to remove")
             st.rerun()
 
     except Exception as e:
         st.error(f"❌ Error reading CSV: {str(e)}")
+        import traceback
+        st.code(traceback.format_exc())
 
 st.markdown("---")
 
@@ -170,18 +190,52 @@ st.markdown("---")
 col1, col2 = st.columns([1, 2])
 
 with col1:
+    # If data has been imported, show only markets with updates
+    if st.session_state.imported_data:
+        market_options = [''] + sorted(st.session_state.imported_data.keys())
+        st.info(f"📋 {len(market_options)-1} market(s) with updates today")
+    else:
+        market_options = [''] + sorted(MARKET_RECIPIENTS.keys())
+
     market = st.selectbox(
         "Select Market",
-        options=[''] + sorted(MARKET_RECIPIENTS.keys()),
-        help="Choose a market to auto-fill recipients"
+        options=market_options,
+        help="Choose a market to generate email"
     )
 
     if market:
-        recipients = MARKET_RECIPIENTS[market]
-        st.success(f"✓ {len(recipients)} recipients")
-        with st.expander("View Recipients"):
-            for recipient in recipients:
-                st.text(recipient)
+        recipients = MARKET_RECIPIENTS.get(market, [])
+        if recipients:
+            st.success(f"✓ {len(recipients)} recipients")
+            with st.expander("View Recipients"):
+                for recipient in recipients:
+                    st.text(recipient)
+        else:
+            st.warning(f"⚠️ No recipients found for market: {market}")
+
+        # Auto-populate from imported data if available
+        if market in st.session_state.imported_data:
+            market_data = st.session_state.imported_data[market]
+
+            # Populate removed addresses
+            removed = [item['address'] for item in market_data['remove']]
+            st.session_state.csv_removed = '\n'.join(removed)
+
+            # Populate added addresses
+            added = [item['address'] for item in market_data['add']]
+            st.session_state.csv_added = '\n'.join(added)
+
+            # Populate codes and frequency
+            lockbox = [str(item['lockbox']) if item['lockbox'] and str(item['lockbox']) != 'nan' else '' for item in market_data['add']]
+            st.session_state.csv_lockbox = '\n'.join(lockbox)
+
+            gate = [str(item['gate']) if item['gate'] and str(item['gate']) != 'nan' else '' for item in market_data['add']]
+            st.session_state.csv_gate = '\n'.join(gate)
+
+            frequency = [str(item['frequency']) if item['frequency'] and str(item['frequency']) != 'nan' else '' for item in market_data['add']]
+            st.session_state.csv_frequency = '\n'.join(frequency)
+
+            st.info(f"📝 Loaded {len(added)} to add, {len(removed)} to remove")
 
 with col2:
     st.markdown("### Removed Properties")
