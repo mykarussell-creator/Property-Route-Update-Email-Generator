@@ -1,0 +1,6 @@
+Timestamp,Market,"Full Street Address (Including City, State, and Zip Code)","Lockbox Code","Date Added","Date for Removal","Reason for Adding","Gate Code",Frequency,Status
+"2025-12-16 10:00:00",PHX,"123 Main St Phoenix AZ 85001",#1234,2025-12-16,,"New property",*5555#,Daily,Add
+"2025-12-16 10:05:00",PHX,"456 Oak Ave Phoenix AZ 85002",#5678,2025-12-16,,"New acquisition",*6666#,Weekly,Add
+"2025-12-16 10:10:00",PHX,"789 Pine Rd Phoenix AZ 85003",,,2025-12-16,"Property sold",,Daily,Remove
+"2025-12-16 10:15:00",ATL,"321 Elm St Atlanta GA 30301",#9999,2025-12-16,,Expansion,*7777#,Daily,Add
+"2025-12-16 10:20:00",ATL,"654 Maple Dr Atlanta GA 30302",,,2025-12-16,"Contract ended",,,Remove

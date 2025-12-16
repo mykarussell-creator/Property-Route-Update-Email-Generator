@@ -6,6 +6,8 @@ Run with: streamlit run routes_app.py
 
 import streamlit as st
 from urllib.parse import quote
+import pandas as pd
+import io
 
 # Market-to-recipients mapping
 MARKET_RECIPIENTS = {
@@ -53,6 +55,18 @@ MARKET_RECIPIENTS = {
     'DC': ['kurt.frulla@securitasinc.com', 'randolph.perrin@securitasinc.com', 'dc-patrols@opendoor.com'],
 }
 
+# Initialize session state
+if 'csv_removed' not in st.session_state:
+    st.session_state.csv_removed = ''
+if 'csv_added' not in st.session_state:
+    st.session_state.csv_added = ''
+if 'csv_lockbox' not in st.session_state:
+    st.session_state.csv_lockbox = ''
+if 'csv_gate' not in st.session_state:
+    st.session_state.csv_gate = ''
+if 'csv_frequency' not in st.session_state:
+    st.session_state.csv_frequency = ''
+
 def generate_email(removed_data, added_data, notes=None):
     """Generate a formatted email update with removed and added addresses."""
     subject = "Property Route Update"
@@ -93,6 +107,65 @@ st.set_page_config(page_title="Property Route Email Generator", page_icon="🏠"
 st.title("🏠 Property Route Update Email Generator")
 st.markdown("Generate property route update emails with automatic recipient lookup")
 
+# CSV Import Section
+st.markdown("### 📁 Import CSV File")
+uploaded_file = st.file_uploader("Upload a CSV file with property route updates", type=['csv'])
+
+if uploaded_file is not None:
+    try:
+        # Read CSV
+        df = pd.read_csv(uploaded_file)
+
+        # Show preview
+        with st.expander("📊 CSV Preview", expanded=False):
+            st.dataframe(df.head())
+
+        # Get market selection for filtering
+        st.markdown("### 🎯 Filter by Market")
+        csv_market = st.selectbox(
+            "Select Market to Import",
+            options=['ALL'] + sorted(MARKET_RECIPIENTS.keys()),
+            help="Choose a market to filter the imported data",
+            key="csv_market_select"
+        )
+
+        if st.button("📥 Import Data", type="primary"):
+            # Filter by market if not ALL
+            if csv_market != 'ALL':
+                df_filtered = df[df['Market'] == csv_market]
+            else:
+                df_filtered = df
+
+            # Separate by Status
+            df_add = df_filtered[df_filtered['Status'] == 'Add']
+            df_remove = df_filtered[df_filtered['Status'] == 'Remove']
+
+            # Populate session state for removed addresses
+            removed_addresses = df_remove['Full Street Address (Including City, State, and Zip Code)'].tolist()
+            st.session_state.csv_removed = '\n'.join(removed_addresses)
+
+            # Populate session state for added addresses
+            added_addresses = df_add['Full Street Address (Including City, State, and Zip Code)'].tolist()
+            st.session_state.csv_added = '\n'.join(added_addresses)
+
+            # Populate codes and frequency
+            lockbox_codes = df_add['Lockbox Code'].fillna('').tolist()
+            st.session_state.csv_lockbox = '\n'.join([str(code) for code in lockbox_codes])
+
+            gate_codes = df_add['Gate Code'].fillna('').tolist()
+            st.session_state.csv_gate = '\n'.join([str(code) for code in gate_codes])
+
+            frequency = df_add['Frequency'].fillna('').tolist()
+            st.session_state.csv_frequency = '\n'.join([str(freq) for freq in frequency])
+
+            st.success(f"✅ Imported {len(df_add)} properties to add and {len(df_remove)} to remove for market: {csv_market}")
+            st.rerun()
+
+    except Exception as e:
+        st.error(f"❌ Error reading CSV: {str(e)}")
+
+st.markdown("---")
+
 # Market selection
 col1, col2 = st.columns([1, 2])
 
@@ -115,6 +188,7 @@ with col2:
     removed_text = st.text_area(
         "Addresses (one per line)",
         height=100,
+        value=st.session_state.csv_removed,
         placeholder="123 Main St, Phoenix, AZ\n456 Oak Ave, Phoenix, AZ",
         key="removed_addresses"
     )
@@ -126,6 +200,7 @@ with col2:
         added_text = st.text_area(
             "Addresses (one per line)",
             height=100,
+            value=st.session_state.csv_added,
             placeholder="789 Pine Rd, Phoenix, AZ\n321 Elm St, Phoenix, AZ",
             key="added_addresses"
         )
@@ -134,6 +209,7 @@ with col2:
         added_lockbox = st.text_area(
             "Lockbox Codes (one per line)",
             height=100,
+            value=st.session_state.csv_lockbox,
             placeholder="#2468\n#1357",
             key="added_lockbox"
         )
@@ -142,6 +218,7 @@ with col2:
         added_gate = st.text_area(
             "Gate Codes (one per line)",
             height=100,
+            value=st.session_state.csv_gate,
             placeholder="*1111#\n*2222#",
             key="added_gate"
         )
@@ -150,6 +227,7 @@ with col2:
         added_frequency = st.text_area(
             "Frequency (one per line)",
             height=100,
+            value=st.session_state.csv_frequency,
             placeholder="Daily\nWeekly",
             key="added_frequency"
         )
