@@ -56,17 +56,17 @@ MARKET_RECIPIENTS = {
     'DC': ['kurt.frulla@securitasinc.com', 'randolph.perrin@securitasinc.com', 'dc-patrols@opendoor.com'],
 }
 
-# Initialize session state
-if 'csv_removed' not in st.session_state:
-    st.session_state.csv_removed = ''
-if 'csv_added' not in st.session_state:
-    st.session_state.csv_added = ''
-if 'csv_lockbox' not in st.session_state:
-    st.session_state.csv_lockbox = ''
-if 'csv_gate' not in st.session_state:
-    st.session_state.csv_gate = ''
-if 'csv_frequency' not in st.session_state:
-    st.session_state.csv_frequency = ''
+# Initialize session state for form fields
+if 'removed_addresses' not in st.session_state:
+    st.session_state.removed_addresses = ''
+if 'added_addresses' not in st.session_state:
+    st.session_state.added_addresses = ''
+if 'added_lockbox' not in st.session_state:
+    st.session_state.added_lockbox = ''
+if 'added_gate' not in st.session_state:
+    st.session_state.added_gate = ''
+if 'added_frequency' not in st.session_state:
+    st.session_state.added_frequency = ''
 
 def generate_email(removed_data, added_data, notes=None):
     """Generate a formatted email update with removed and added addresses."""
@@ -277,21 +277,21 @@ if market and market in st.session_state.imported_data:
 
     # Populate removed addresses
     removed = [item['address'] for item in market_data['remove']]
-    st.session_state.csv_removed = '\n'.join(removed)
+    st.session_state.removed_addresses = '\n'.join(removed)
 
     # Populate added addresses
     added = [item['address'] for item in market_data['add']]
-    st.session_state.csv_added = '\n'.join(added)
+    st.session_state.added_addresses = '\n'.join(added)
 
     # Populate codes and frequency
     lockbox = [str(item['lockbox']) if item['lockbox'] and str(item['lockbox']) != 'nan' else '' for item in market_data['add']]
-    st.session_state.csv_lockbox = '\n'.join(lockbox)
+    st.session_state.added_lockbox = '\n'.join(lockbox)
 
     gate = [str(item['gate']) if item['gate'] and str(item['gate']) != 'nan' else '' for item in market_data['add']]
-    st.session_state.csv_gate = '\n'.join(gate)
+    st.session_state.added_gate = '\n'.join(gate)
 
     frequency = [str(item['frequency']) if item['frequency'] and str(item['frequency']) != 'nan' else '' for item in market_data['add']]
-    st.session_state.csv_frequency = '\n'.join(frequency)
+    st.session_state.added_frequency = '\n'.join(frequency)
 
     # Show what was loaded
     st.info(f"✅ **Form auto-populated for {market}**\n\n"
@@ -330,7 +330,6 @@ with col1:
     removed_text = st.text_area(
         "Addresses (one per line)",
         height=100,
-        value=st.session_state.csv_removed,
         placeholder="123 Main St, Phoenix, AZ\n456 Oak Ave, Phoenix, AZ",
         key="removed_addresses"
     )
@@ -340,7 +339,6 @@ with col2:
     added_text = st.text_area(
         "Addresses (one per line)",
         height=100,
-        value=st.session_state.csv_added,
         placeholder="789 Pine Rd, Phoenix, AZ\n321 Elm St, Phoenix, AZ",
         key="added_addresses"
     )
@@ -353,7 +351,6 @@ with col3:
     added_lockbox = st.text_area(
         "Lockbox Codes (one per line)",
         height=100,
-        value=st.session_state.csv_lockbox,
         placeholder="#2468\n#1357",
         key="added_lockbox"
     )
@@ -362,7 +359,6 @@ with col4:
     added_gate = st.text_area(
         "Gate Codes (one per line)",
         height=100,
-        value=st.session_state.csv_gate,
         placeholder="*1111#\n*2222#",
         key="added_gate"
     )
@@ -371,7 +367,6 @@ with col5:
     added_frequency = st.text_area(
         "Frequency (one per line)",
         height=100,
-        value=st.session_state.csv_frequency,
         placeholder="Daily\nWeekly",
         key="added_frequency"
     )
