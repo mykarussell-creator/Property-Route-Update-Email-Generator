@@ -256,58 +256,77 @@ if uploaded_file is not None:
 st.markdown("---")
 
 # Market selection
-col1, col2 = st.columns([1, 2])
+st.markdown("### 📧 Generate Email for Market")
+
+# If data has been imported, show only markets with updates
+if st.session_state.imported_data:
+    market_options = [''] + sorted(st.session_state.imported_data.keys())
+    st.success(f"✅ {len(market_options)-1} market(s) have updates today")
+else:
+    market_options = [''] + sorted(MARKET_RECIPIENTS.keys())
+
+market = st.selectbox(
+    "Select Market to Generate Email",
+    options=market_options,
+    help="Choose a market - form will auto-populate with today's updates"
+)
+
+# Auto-populate from imported data if available
+if market and market in st.session_state.imported_data:
+    market_data = st.session_state.imported_data[market]
+
+    # Populate removed addresses
+    removed = [item['address'] for item in market_data['remove']]
+    st.session_state.csv_removed = '\n'.join(removed)
+
+    # Populate added addresses
+    added = [item['address'] for item in market_data['add']]
+    st.session_state.csv_added = '\n'.join(added)
+
+    # Populate codes and frequency
+    lockbox = [str(item['lockbox']) if item['lockbox'] and str(item['lockbox']) != 'nan' else '' for item in market_data['add']]
+    st.session_state.csv_lockbox = '\n'.join(lockbox)
+
+    gate = [str(item['gate']) if item['gate'] and str(item['gate']) != 'nan' else '' for item in market_data['add']]
+    st.session_state.csv_gate = '\n'.join(gate)
+
+    frequency = [str(item['frequency']) if item['frequency'] and str(item['frequency']) != 'nan' else '' for item in market_data['add']]
+    st.session_state.csv_frequency = '\n'.join(frequency)
+
+    # Show what was loaded
+    st.info(f"✅ **Form auto-populated for {market}**\n\n"
+            f"📤 {len(removed)} properties to remove\n\n"
+            f"📥 {len(added)} properties to add")
+
+    # Show recipients
+    recipients = MARKET_RECIPIENTS.get(market, [])
+    if recipients:
+        with st.expander(f"📨 Email will be sent to {len(recipients)} recipient(s)", expanded=False):
+            for recipient in recipients:
+                st.text(recipient)
+    else:
+        st.warning(f"⚠️ No recipients found for market: {market}")
+
+elif market:
+    # Market selected but no imported data (manual entry mode)
+    recipients = MARKET_RECIPIENTS.get(market, [])
+    if recipients:
+        st.info(f"✓ {len(recipients)} recipients configured")
+        with st.expander("View Recipients"):
+            for recipient in recipients:
+                st.text(recipient)
+    else:
+        st.warning(f"⚠️ No recipients found for market: {market}")
+
+st.markdown("---")
+
+# Property details form
+st.markdown("### 📝 Property Details")
+
+col1, col2 = st.columns(2)
 
 with col1:
-    # If data has been imported, show only markets with updates
-    if st.session_state.imported_data:
-        market_options = [''] + sorted(st.session_state.imported_data.keys())
-        st.info(f"📋 {len(market_options)-1} market(s) with updates today")
-    else:
-        market_options = [''] + sorted(MARKET_RECIPIENTS.keys())
-
-    market = st.selectbox(
-        "Select Market",
-        options=market_options,
-        help="Choose a market to generate email"
-    )
-
-    if market:
-        recipients = MARKET_RECIPIENTS.get(market, [])
-        if recipients:
-            st.success(f"✓ {len(recipients)} recipients")
-            with st.expander("View Recipients"):
-                for recipient in recipients:
-                    st.text(recipient)
-        else:
-            st.warning(f"⚠️ No recipients found for market: {market}")
-
-        # Auto-populate from imported data if available
-        if market in st.session_state.imported_data:
-            market_data = st.session_state.imported_data[market]
-
-            # Populate removed addresses
-            removed = [item['address'] for item in market_data['remove']]
-            st.session_state.csv_removed = '\n'.join(removed)
-
-            # Populate added addresses
-            added = [item['address'] for item in market_data['add']]
-            st.session_state.csv_added = '\n'.join(added)
-
-            # Populate codes and frequency
-            lockbox = [str(item['lockbox']) if item['lockbox'] and str(item['lockbox']) != 'nan' else '' for item in market_data['add']]
-            st.session_state.csv_lockbox = '\n'.join(lockbox)
-
-            gate = [str(item['gate']) if item['gate'] and str(item['gate']) != 'nan' else '' for item in market_data['add']]
-            st.session_state.csv_gate = '\n'.join(gate)
-
-            frequency = [str(item['frequency']) if item['frequency'] and str(item['frequency']) != 'nan' else '' for item in market_data['add']]
-            st.session_state.csv_frequency = '\n'.join(frequency)
-
-            st.info(f"📝 Loaded {len(added)} to add, {len(removed)} to remove")
-
-with col2:
-    st.markdown("### Removed Properties")
+    st.markdown("**Removed Properties**")
     removed_text = st.text_area(
         "Addresses (one per line)",
         height=100,
@@ -316,52 +335,54 @@ with col2:
         key="removed_addresses"
     )
 
-    st.markdown("### Added Properties")
-    col2_1, col2_2, col2_3, col2_4 = st.columns(4)
-
-    with col2_1:
-        added_text = st.text_area(
-            "Addresses (one per line)",
-            height=100,
-            value=st.session_state.csv_added,
-            placeholder="789 Pine Rd, Phoenix, AZ\n321 Elm St, Phoenix, AZ",
-            key="added_addresses"
-        )
-
-    with col2_2:
-        added_lockbox = st.text_area(
-            "Lockbox Codes (one per line)",
-            height=100,
-            value=st.session_state.csv_lockbox,
-            placeholder="#2468\n#1357",
-            key="added_lockbox"
-        )
-
-    with col2_3:
-        added_gate = st.text_area(
-            "Gate Codes (one per line)",
-            height=100,
-            value=st.session_state.csv_gate,
-            placeholder="*1111#\n*2222#",
-            key="added_gate"
-        )
-
-    with col2_4:
-        added_frequency = st.text_area(
-            "Frequency (one per line)",
-            height=100,
-            value=st.session_state.csv_frequency,
-            placeholder="Daily\nWeekly",
-            key="added_frequency"
-        )
-
-    st.markdown("### Additional Notes")
-    notes = st.text_area(
-        "Notes (optional)",
+with col2:
+    st.markdown("**Added Properties**")
+    added_text = st.text_area(
+        "Addresses (one per line)",
         height=100,
-        placeholder="Add any additional information or special instructions...",
-        key="notes"
+        value=st.session_state.csv_added,
+        placeholder="789 Pine Rd, Phoenix, AZ\n321 Elm St, Phoenix, AZ",
+        key="added_addresses"
     )
+
+# Additional details for added properties
+st.markdown("**Additional Details for Added Properties**")
+col3, col4, col5 = st.columns(3)
+
+with col3:
+    added_lockbox = st.text_area(
+        "Lockbox Codes (one per line)",
+        height=100,
+        value=st.session_state.csv_lockbox,
+        placeholder="#2468\n#1357",
+        key="added_lockbox"
+    )
+
+with col4:
+    added_gate = st.text_area(
+        "Gate Codes (one per line)",
+        height=100,
+        value=st.session_state.csv_gate,
+        placeholder="*1111#\n*2222#",
+        key="added_gate"
+    )
+
+with col5:
+    added_frequency = st.text_area(
+        "Frequency (one per line)",
+        height=100,
+        value=st.session_state.csv_frequency,
+        placeholder="Daily\nWeekly",
+        key="added_frequency"
+    )
+
+st.markdown("### Additional Notes")
+notes = st.text_area(
+    "Notes (optional)",
+    height=100,
+    placeholder="Add any additional information or special instructions...",
+    key="notes"
+)
 
 # Generate button
 st.markdown("---")
