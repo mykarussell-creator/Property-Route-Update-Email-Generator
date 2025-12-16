@@ -53,22 +53,36 @@ MARKET_RECIPIENTS = {
     'DC': ['kurt.frulla@securitasinc.com', 'randolph.perrin@securitasinc.com', 'dc-patrols@opendoor.com'],
 }
 
-def generate_email(removed_addresses, added_addresses):
+def generate_email(removed_data, added_data, notes=None):
     """Generate a formatted email update with removed and added addresses."""
     subject = "Property Route Update"
     body = "Hi,\n\n"
 
-    if removed_addresses:
+    if removed_data['addresses']:
         body += "Removed Addresses:\n\n"
-        for i, address in enumerate(removed_addresses, 1):
+        for i, address in enumerate(removed_data['addresses'], 1):
             body += f"{i}. {address}\n"
         body += "\n"
 
-    if added_addresses:
+    if added_data['addresses']:
         body += "Added Addresses:\n\n"
-        for i, address in enumerate(added_addresses, 1):
+        for i, (address, lockbox, gate, freq) in enumerate(zip(
+            added_data['addresses'],
+            added_data['lockbox_codes'],
+            added_data['gate_codes'],
+            added_data['frequency']
+        ), 1):
             body += f"{i}. {address}\n"
+            if lockbox:
+                body += f"   Lockbox Code: {lockbox}\n"
+            if gate:
+                body += f"   Gate Code: {gate}\n"
+            if freq:
+                body += f"   Frequency: {freq}\n"
         body += "\n"
+
+    if notes:
+        body += f"Notes:\n{notes}\n\n"
 
     body += "Please let me know if you have any questions.\n\nBest regards"
     return subject, body
@@ -97,34 +111,92 @@ with col1:
                 st.text(recipient)
 
 with col2:
-    st.markdown("### Addresses")
-
+    st.markdown("### Removed Properties")
     removed_text = st.text_area(
-        "Removed Addresses (one per line)",
+        "Addresses (one per line)",
         height=100,
-        placeholder="123 Main St, Phoenix, AZ\n456 Oak Ave, Phoenix, AZ"
+        placeholder="123 Main St, Phoenix, AZ\n456 Oak Ave, Phoenix, AZ",
+        key="removed_addresses"
     )
 
-    added_text = st.text_area(
-        "Added Addresses (one per line)",
+    st.markdown("### Added Properties")
+    col2_1, col2_2, col2_3, col2_4 = st.columns(4)
+
+    with col2_1:
+        added_text = st.text_area(
+            "Addresses (one per line)",
+            height=100,
+            placeholder="789 Pine Rd, Phoenix, AZ\n321 Elm St, Phoenix, AZ",
+            key="added_addresses"
+        )
+
+    with col2_2:
+        added_lockbox = st.text_area(
+            "Lockbox Codes (one per line)",
+            height=100,
+            placeholder="#2468\n#1357",
+            key="added_lockbox"
+        )
+
+    with col2_3:
+        added_gate = st.text_area(
+            "Gate Codes (one per line)",
+            height=100,
+            placeholder="*1111#\n*2222#",
+            key="added_gate"
+        )
+
+    with col2_4:
+        added_frequency = st.text_area(
+            "Frequency (one per line)",
+            height=100,
+            placeholder="Daily\nWeekly",
+            key="added_frequency"
+        )
+
+    st.markdown("### Additional Notes")
+    notes = st.text_area(
+        "Notes (optional)",
         height=100,
-        placeholder="789 Pine Rd, Phoenix, AZ\n321 Elm St, Phoenix, AZ"
+        placeholder="Add any additional information or special instructions...",
+        key="notes"
     )
 
 # Generate button
 st.markdown("---")
 
 if st.button("📧 Generate Email & Open Gmail", type="primary", use_container_width=True):
-    # Parse addresses
+    # Parse addresses and codes
     removed_addresses = [addr.strip() for addr in removed_text.split('\n') if addr.strip()]
+
     added_addresses = [addr.strip() for addr in added_text.split('\n') if addr.strip()]
+    added_lockbox_codes = [code.strip() for code in added_lockbox.split('\n')]
+    added_gate_codes = [code.strip() for code in added_gate.split('\n')]
+    added_frequency_list = [freq.strip() for freq in added_frequency.split('\n')]
+
+    # Pad lists to match address count
+    added_lockbox_codes += [''] * (len(added_addresses) - len(added_lockbox_codes))
+    added_gate_codes += [''] * (len(added_addresses) - len(added_gate_codes))
+    added_frequency_list += [''] * (len(added_addresses) - len(added_frequency_list))
 
     # Validate
     if not removed_addresses and not added_addresses:
         st.error("⚠️ Please enter at least one address to add or remove")
     else:
+        # Prepare data dictionaries
+        removed_data = {
+            'addresses': removed_addresses
+        }
+
+        added_data = {
+            'addresses': added_addresses,
+            'lockbox_codes': added_lockbox_codes,
+            'gate_codes': added_gate_codes,
+            'frequency': added_frequency_list
+        }
+
         # Generate email
-        subject, body = generate_email(removed_addresses, added_addresses)
+        subject, body = generate_email(removed_data, added_data, notes.strip() if notes else None)
         recipients = MARKET_RECIPIENTS.get(market) if market else None
 
         # Show preview
