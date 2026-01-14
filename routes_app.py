@@ -35,7 +35,7 @@ MARKET_RECIPIENTS = {
     'LAS': ['matthew.diaz@securitasinc.com', 'laspatrols@opendoor.com'],
     'LAX/RIV': ['wissam.fakhreddine@securitasinc.com', 'Julio.gonzalez@securitasinc.com', 'Charles.sunderland@securitasinc.com', 'Roy.cruz@securitasinc.com', 'laxpatrols@opendoor.com', 'rivpatrols@opendoor.com'],
     'MIA': ['ramon.santos@securitasinc.com', 'miapatrols@opendoor.com'],
-    'MSP': ['faheem.karim@securitasinc.com', 'msppatrols@opendoor.com'],
+    'MSP': ['Raul.Sanchez02@securitasinc.com', 'msppatrols@opendoor.com'],
     'NAS': ['stacy.tislow@securitasinc.com', 'naspatrols@opendoor.com'],
     'NYJ': ['Jason.Mahoney@securitasinc.com', 'nyjpatrols@opendoor.com'],
     'NCO': ['michael.parsons1@securitasinc.com', 'ncopatrols@opendoor.com'],
