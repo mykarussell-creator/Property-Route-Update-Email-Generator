@@ -12,7 +12,7 @@ from datetime import datetime
 
 # Market-to-recipients mapping
 MARKET_RECIPIENTS = {
-    'ATL': ['pam.mcgee@securitasinc.com', 'Keyonia.Henderson@securitasinc.com', 'atlpatrols@opendoor.com'],
+    'ATL': ['pam.mcgee@securitasinc.com', 'atlpatrols@opendoor.com'],
     'ABQ': ['ken.nead@securitasinc.com', 'vicky.hawkins@securitasinc.com', 'abq-patrols@opendoor.com'],
     'ATX': ['mehr.enayati@securitasinc.com', 'atxpatrols@opendoor.com'],
     'BOI': ['james.kopsho@securitasinc.com', 'deepsixservicesinc@gmail.com', 'boi-patrols@opendoor.com'],
