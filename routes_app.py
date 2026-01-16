@@ -67,6 +67,8 @@ if 'added_gate' not in st.session_state:
     st.session_state.added_gate = ''
 if 'added_frequency' not in st.session_state:
     st.session_state.added_frequency = ''
+if 'added_removal_date' not in st.session_state:
+    st.session_state.added_removal_date = ''
 
 def generate_email(removed_data, added_data, notes=None):
     """Generate a formatted email update with removed and added addresses."""
@@ -81,11 +83,12 @@ def generate_email(removed_data, added_data, notes=None):
 
     if added_data['addresses']:
         body += "Added Addresses:\n\n"
-        for i, (address, lockbox, gate, freq) in enumerate(zip(
+        for i, (address, lockbox, gate, freq, removal_date) in enumerate(zip(
             added_data['addresses'],
             added_data['lockbox_codes'],
             added_data['gate_codes'],
-            added_data['frequency']
+            added_data['frequency'],
+            added_data['removal_dates']
         ), 1):
             body += f"{i}. {address}\n"
             if lockbox:
@@ -94,6 +97,8 @@ def generate_email(removed_data, added_data, notes=None):
                 body += f"   Gate Code: {gate}\n"
             if freq:
                 body += f"   Frequency: {freq}\n"
+            if removal_date:
+                body += f"   Removal Date: {removal_date}\n"
         body += "\n"
 
     if notes:
@@ -218,11 +223,17 @@ if uploaded_file is not None:
 
                     market_adds = df_add_today[df_add_today['Market'] == market]
                     for _, row in market_adds.iterrows():
+                        # Format removal date if it exists
+                        removal_date = ''
+                        if pd.notna(row.get('Date for Removal Parsed')):
+                            removal_date = row['Date for Removal Parsed'].strftime('%Y-%m-%d')
+
                         imported_data[market]['add'].append({
                             'address': row['Full Street Address (Including City, State, and Zip Code)'],
                             'lockbox': row.get('Lockbox Code', ''),
                             'gate': row.get('Gate Code', ''),
-                            'frequency': row.get('Frequency', '')
+                            'frequency': row.get('Frequency', ''),
+                            'removal_date': removal_date
                         })
 
                 # Process removals by market
@@ -293,6 +304,9 @@ if market and market in st.session_state.imported_data:
     frequency = [str(item['frequency']) if item['frequency'] and str(item['frequency']) != 'nan' else '' for item in market_data['add']]
     st.session_state.added_frequency = '\n'.join(frequency)
 
+    removal_date = [str(item['removal_date']) if item['removal_date'] and str(item['removal_date']) != 'nan' else '' for item in market_data['add']]
+    st.session_state.added_removal_date = '\n'.join(removal_date)
+
     # Show what was loaded
     st.info(f"✅ **Form auto-populated for {market}**\n\n"
             f"📤 {len(removed)} properties to remove\n\n"
@@ -345,7 +359,7 @@ with col2:
 
 # Additional details for added properties
 st.markdown("**Additional Details for Added Properties**")
-col3, col4, col5 = st.columns(3)
+col3, col4 = st.columns(2)
 
 with col3:
     added_lockbox = st.text_area(
@@ -363,12 +377,22 @@ with col4:
         key="added_gate"
     )
 
+col5, col6 = st.columns(2)
+
 with col5:
     added_frequency = st.text_area(
         "Frequency (one per line)",
         height=100,
         placeholder="Daily\nWeekly",
         key="added_frequency"
+    )
+
+with col6:
+    added_removal_date = st.text_area(
+        "Removal Date (one per line)",
+        height=100,
+        placeholder="2026-03-15\n2026-04-20",
+        key="added_removal_date"
     )
 
 st.markdown("### Additional Notes")
@@ -390,11 +414,13 @@ if st.button("📧 Generate Email & Open Gmail", type="primary", use_container_w
     added_lockbox_codes = [code.strip() for code in added_lockbox.split('\n')]
     added_gate_codes = [code.strip() for code in added_gate.split('\n')]
     added_frequency_list = [freq.strip() for freq in added_frequency.split('\n')]
+    added_removal_dates = [date.strip() for date in added_removal_date.split('\n')]
 
     # Pad lists to match address count
     added_lockbox_codes += [''] * (len(added_addresses) - len(added_lockbox_codes))
     added_gate_codes += [''] * (len(added_addresses) - len(added_gate_codes))
     added_frequency_list += [''] * (len(added_addresses) - len(added_frequency_list))
+    added_removal_dates += [''] * (len(added_addresses) - len(added_removal_dates))
 
     # Validate
     if not removed_addresses and not added_addresses:
@@ -409,7 +435,8 @@ if st.button("📧 Generate Email & Open Gmail", type="primary", use_container_w
             'addresses': added_addresses,
             'lockbox_codes': added_lockbox_codes,
             'gate_codes': added_gate_codes,
-            'frequency': added_frequency_list
+            'frequency': added_frequency_list,
+            'removal_dates': added_removal_dates
         }
 
         # Generate email
