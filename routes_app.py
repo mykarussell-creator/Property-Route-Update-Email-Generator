@@ -18,7 +18,7 @@ MARKET_RECIPIENTS = {
     'BOI': ['james.kopsho@securitasinc.com', 'deepsixservicesinc@gmail.com', 'boi-patrols@opendoor.com'],
     'BOS': ['marc.cutler@securitasinc.com', 'bos-patrols@opendoor.com'],
     'CHS': ['aaron.back@securitasinc.com', 'Timothy.Lockett@securitasinc.com', 'kenny.lancaster@securitasinc.com', 'chs-patrols@opendoor.com'],
-    'CLT': ['Timothy.Lockett@securitasinc.com', 'cltpatrols@opendoor.com'],
+    'CLT': ['Timothy.Lockett@securitasinc.com', 'sean.bachard@securitasinc.com', 'cltpatrols@opendoor.com'],
     'CVG': ['james.sherrard@securitasinc.com', 'kurt.frulla@securitasinc.com', 'cvg-patrols@opendoor.com'],
     'COS': ['michael.parsons1@securitasinc.com', 'cospatrols@opendoor.com'],
     'CUB': ['gibsontaskforce@gmail.com', 'cubpatrols@opendoor.com'],
