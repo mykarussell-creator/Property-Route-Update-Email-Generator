@@ -69,6 +69,8 @@ if 'added_frequency' not in st.session_state:
     st.session_state.added_frequency = ''
 if 'added_removal_date' not in st.session_state:
     st.session_state.added_removal_date = ''
+if 'added_reason' not in st.session_state:
+    st.session_state.added_reason = ''
 
 def generate_email(removed_data, added_data, notes=None):
     """Generate a formatted email update with removed and added addresses."""
@@ -83,14 +85,17 @@ def generate_email(removed_data, added_data, notes=None):
 
     if added_data['addresses']:
         body += "Added Addresses:\n\n"
-        for i, (address, lockbox, gate, freq, removal_date) in enumerate(zip(
+        for i, (address, lockbox, gate, freq, removal_date, reason) in enumerate(zip(
             added_data['addresses'],
             added_data['lockbox_codes'],
             added_data['gate_codes'],
             added_data['frequency'],
-            added_data['removal_dates']
+            added_data['removal_dates'],
+            added_data['reasons']
         ), 1):
             body += f"{i}. {address}\n"
+            if reason:
+                body += f"   Reason for Adding: {reason}\n"
             if lockbox:
                 body += f"   Lockbox Code: {lockbox}\n"
             if gate:
@@ -233,7 +238,8 @@ if uploaded_file is not None:
                             'lockbox': row.get('Lockbox Code', ''),
                             'gate': row.get('Gate Code', ''),
                             'frequency': row.get('Frequency', ''),
-                            'removal_date': removal_date
+                            'removal_date': removal_date,
+                            'reason': row.get('Reason for Adding', '')
                         })
 
                 # Process removals by market
@@ -306,6 +312,9 @@ if market and market in st.session_state.imported_data:
 
     removal_date = [str(item['removal_date']) if item['removal_date'] and str(item['removal_date']) != 'nan' else '' for item in market_data['add']]
     st.session_state.added_removal_date = '\n'.join(removal_date)
+
+    reason = [str(item['reason']) if item['reason'] and str(item['reason']) != 'nan' else '' for item in market_data['add']]
+    st.session_state.added_reason = '\n'.join(reason)
 
     # Show what was loaded
     st.info(f"✅ **Form auto-populated for {market}**\n\n"
@@ -395,6 +404,15 @@ with col6:
         key="added_removal_date"
     )
 
+st.markdown("**Reason for Adding (one per line)**")
+added_reason = st.text_area(
+    "Reason for Adding",
+    height=100,
+    placeholder="New acquisition\nReplacement property",
+    key="added_reason",
+    label_visibility="collapsed"
+)
+
 st.markdown("### Additional Notes")
 notes = st.text_area(
     "Notes (optional)",
@@ -415,12 +433,14 @@ if st.button("📧 Generate Email & Open Gmail", type="primary", use_container_w
     added_gate_codes = [code.strip() for code in added_gate.split('\n')]
     added_frequency_list = [freq.strip() for freq in added_frequency.split('\n')]
     added_removal_dates = [date.strip() for date in added_removal_date.split('\n')]
+    added_reasons = [reason.strip() for reason in added_reason.split('\n')]
 
     # Pad lists to match address count
     added_lockbox_codes += [''] * (len(added_addresses) - len(added_lockbox_codes))
     added_gate_codes += [''] * (len(added_addresses) - len(added_gate_codes))
     added_frequency_list += [''] * (len(added_addresses) - len(added_frequency_list))
     added_removal_dates += [''] * (len(added_addresses) - len(added_removal_dates))
+    added_reasons += [''] * (len(added_addresses) - len(added_reasons))
 
     # Validate
     if not removed_addresses and not added_addresses:
@@ -436,7 +456,8 @@ if st.button("📧 Generate Email & Open Gmail", type="primary", use_container_w
             'lockbox_codes': added_lockbox_codes,
             'gate_codes': added_gate_codes,
             'frequency': added_frequency_list,
-            'removal_dates': added_removal_dates
+            'removal_dates': added_removal_dates,
+            'reasons': added_reasons
         }
 
         # Generate email
