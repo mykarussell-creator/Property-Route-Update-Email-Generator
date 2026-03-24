@@ -54,6 +54,7 @@ MARKET_RECIPIENTS = {
     'TPA': ['david.bowling@securitasinc.com', 'tampamobilesupervisor@gmail.com', 'orlandomobilesupervisor1@gmail.com', 'tpapatrols@opendoor.com'],
     'TUS': ['ken.nead@securitasinc.com', 'vicky.hawkins@securitasinc.com', 'tuspatrols@opendoor.com'],
     'DC': ['kurt.frulla@securitasinc.com', 'randolph.perrin@securitasinc.com', 'dc-patrols@opendoor.com'],
+    'RIC': ['kurt.frulla@securitasinc.com', 'rva-patrols@opendoor.com'],
 }
 
 # Initialize session state for form fields
