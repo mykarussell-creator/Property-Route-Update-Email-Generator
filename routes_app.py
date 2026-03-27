@@ -27,7 +27,7 @@ MARKET_RECIPIENTS = {
     'DEN': ['michael.parsons1@securitasinc.com', 'denpatrols@opendoor.com'],
     'DET': ['trevor.trask@securitasinc.com', 'kurt.frulla@securitasinc.com', 'Thomas.Oley1@securitasinc.com', 'detpatrols@opendoor.com'],
     'GSO': ['vernon.meeks@securitasinc.com', 'sean.bechard@securitasinc.com', 'gsopatrols@opendoor.com'],
-    'HOU': ['THERESA.DILWORTH@securitasinc.com', 'houpatrols@opendoor.com'],
+    'HOU': ['THERESA.DILWORTH@securitasinc.com', 'Kirk.Miller@securitasinc.com', 'houpatrols@opendoor.com'],
     'IND': ['travis.mager@securitasinc.com', 'indpatrols@opendoor.com'],
     'JAX': ['Aaron.back@securitasinc.com', 'jacksonvillemobilesupervisor@gmail.com', 'jaxpatrols@opendoor.com'],
     'KCI': ['Robert.klostermayer@securitasinc.com', 'kcipatrols@opendoor.com'],
