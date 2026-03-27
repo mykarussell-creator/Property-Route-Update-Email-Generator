@@ -43,7 +43,7 @@ MARKET_RECIPIENTS = {
     'ORL': ['david.bowling@securitasinc.com', 'orlandomobilesupervisor1@gmail.com', 'orlpatrols@opendoor.com'],
     'PHX': ['ken.nead@securitasinc.com', 'vicky.hawkins@securitasinc.com', 'phxpatrols@opendoor.com'],
     'PDX': ['roy.tauala@securitasinc.com', 'Moss.Coley@securitasinc.com', 'pdxpatrols@opendoor.com'],
-    'RDU': ['sean.bechard@securitasinc.com', 'rdupatrols@opendoor.com'],
+    'RDU': ['aaron.back@securitasinc.com', 'rdupatrols@opendoor.com'],
     'RNO': ['Paul.Mikesell@securitasinc.com', 'rnopatrols@opendoor.com'],
     'SAC': ['alejandro.razo@securitasinc.com', 'monique.davis@securitasinc.com', 'charles.sunderland@securitasinc.com', 'sacpatrols@opendoor.com', 'sacramento.dispatch@securitasinc.com'],
     'STL': ['mike.hudson@securitasinc.com', 'stl-patrols@opendoor.com'],
