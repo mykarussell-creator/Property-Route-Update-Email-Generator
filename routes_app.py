@@ -39,7 +39,7 @@ MARKET_RECIPIENTS = {
     'NAS': ['stacy.tislow@securitasinc.com', 'naspatrols@opendoor.com'],
     'NYJ': ['Jason.Mahoney@securitasinc.com', 'nyjpatrols@opendoor.com'],
     'NCO': ['michael.parsons1@securitasinc.com', 'ncopatrols@opendoor.com'],
-    'OKC': ['kyle.meyer@securitasinc.com', 'okcpatrols@opendoor.com'],
+    'OKC': ['ray.self@securitasinc.com', 'okcpatrols@opendoor.com'],
     'ORL': ['david.bowling@securitasinc.com', 'orlandomobilesupervisor1@gmail.com', 'orlpatrols@opendoor.com'],
     'PHX': ['ken.nead@securitasinc.com', 'vicky.hawkins@securitasinc.com', 'phxpatrols@opendoor.com'],
     'PDX': ['roy.tauala@securitasinc.com', 'Moss.Coley@securitasinc.com', 'pdxpatrols@opendoor.com'],
