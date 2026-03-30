@@ -21,7 +21,7 @@ MARKET_RECIPIENTS = {
     'CLT': ['Devante.Mitchell@securitasinc.com', 'cltpatrols@opendoor.com'],
     'CVG': ['james.sherrard@securitasinc.com','kurt.frulla@securitasinc.com', 'cvg-patrols@opendoor.com'],
     'COS': ['michael.parsons1@securitasinc.com', 'cospatrols@opendoor.com'],
-    'CUB': ['gibsontaskforce@gmail.com', 'cubpatrols@opendoor.com'],
+    'CUB': ['aaron.back@securitasinc.com', 'gibsontaskforce@gmail.com', 'cubpatrols@opendoor.com'],
     'CMH': ['scott.cultice@securitasinc.com', 'kurt.frulla@securitasinc.com', 'cmh-patrols@opendoor.com'],
     'DFW': ['octavio.quezada@securitasinc.com', 'carlos.cirilo@securitasinc.com', 'Ftw001.securitas@gmail.com', 'dp001.securitas@gmail.com', 'dfwpatrols@opendoor.com'],
     'DEN': ['michael.parsons1@securitasinc.com', 'denpatrols@opendoor.com'],
