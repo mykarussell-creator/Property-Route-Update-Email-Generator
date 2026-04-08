@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Securitas Patrol Contacts — Opendoor</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: #FAF8F7; color: #21201F; min-height: 100vh; }
+
+  /* HEADER */
+  .header { background: #21201F; padding: 24px 24px 20px; border-bottom: 3px solid #0040E6; }
+  .header-inner { max-width: 720px; margin: 0 auto; }
+  .header-tag { margin: 0 0 2px; font-size: 11px; font-weight: 600; color: #0040E6; letter-spacing: 0.08em; text-transform: uppercase; }
+  .header h1 { margin: 0 0 4px; font-size: 22px; font-weight: 500; color: #FFF; letter-spacing: -0.02em; }
+  .header-meta { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .header-stats { margin: 0; font-size: 12px; color: #9D9893; }
+  .source-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; }
+  .source-live { background: #0040E6; color: #fff; }
+  .source-local { background: #403E3C; color: #9D9893; }
+  .btn-refresh { background: none; border: none; color: #9D9893; cursor: pointer; display: flex; align-items: center; gap: 4px; font-size: 10px; font-family: inherit; padding: 2px 4px; }
+  .btn-refresh:hover { color: #fff; }
+  .header-error { margin: 4px 0 0; font-size: 11px; color: #C34143; }
+  .header-time { margin: 4px 0 0; font-size: 10px; color: #736D68; }
+
+  /* SEARCH BAR */
+  .search-bar { background: #FFF; border-bottom: 1px solid #ECE9E7; padding: 14px 24px; position: sticky; top: 0; z-index: 10; }
+  .search-inner { max-width: 720px; margin: 0 auto; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .search-wrap { position: relative; flex: 1 1 260px; min-width: 180px; }
+  .search-wrap svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); }
+  .search-input { width: 100%; padding: 9px 12px 9px 38px; border: 1px solid #DEDAD7; border-radius: 8px; font-size: 13px; font-family: inherit; color: #21201F; background: #FAF8F7; outline: none; transition: border-color 0.15s; }
+  .search-input:focus { border-color: #0040E6; }
+  .filter-btns { display: flex; gap: 6px; }
+  .filter-btn { padding: 6px 14px; border-radius: 20px; border: 1px solid #DEDAD7; background: #FFF; color: #403E3C; font-size: 12px; font-weight: 500; font-family: inherit; cursor: pointer; transition: all 0.15s; }
+  .filter-btn.active { border: 1.5px solid #0040E6; background: #0040E6; color: #FFF; }
+
+  /* CONTENT */
+  .content { max-width: 720px; margin: 0 auto; padding: 12px 24px 20px; }
+  .results-count { margin: 0 0 10px; font-size: 11px; color: #9D9893; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+  .empty { text-align: center; padding: 48px 20px; color: #9D9893; }
+  .empty p:first-child { font-size: 15px; }
+  .empty p:last-child { font-size: 12px; margin-top: 6px; }
+
+  /* MARKET CARD */
+  .market-card { background: #FFF; border: 1px solid #ECE9E7; border-radius: 10px; overflow: hidden; transition: box-shadow 0.15s; margin-bottom: 8px; }
+  .market-card:hover { box-shadow: 0 4px 16px rgba(0,64,230,0.07); }
+  .card-header { padding: 14px 16px; cursor: pointer; display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+  .card-market-name { font-size: 15px; font-weight: 600; color: #21201F; margin-bottom: 4px; }
+  .card-badges { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+  .badge-24 { background: #EBF5EE; color: #007F5E; }
+  .badge-limited { background: #FEF3C7; color: #92400E; }
+  .card-count { font-size: 11px; color: #9D9893; }
+  .chevron { color: #9D9893; margin-top: 2px; transition: transform 0.2s; }
+  .chevron.open { transform: rotate(180deg); }
+
+  /* EXPANDED CARD */
+  .card-body { border-top: 1px solid #ECE9E7; padding: 12px 16px 16px; display: none; }
+  .card-body.open { display: block; }
+  .coverage-detail { font-size: 12px; color: #736D68; margin-bottom: 10px; padding: 6px 10px; background: #FAF8F7; border-radius: 6px; line-height: 1.5; }
+  .coverage-detail strong { color: #403E3C; }
+  .dispatch-info { font-size: 12px; color: #736D68; margin-bottom: 10px; display: flex; flex-direction: column; gap: 3px; }
+  .dispatch-row { display: flex; align-items: flex-start; gap: 6px; }
+  .dispatch-label { font-weight: 600; color: #403E3C; min-width: 60px; flex-shrink: 0; }
+  .dispatch-row a { color: #0040E6; text-decoration: none; }
+  .dispatch-row span { color: #403E3C; word-break: break-all; }
+  .note-callout { font-size: 11px; color: #92400E; background: #FEF3C7; padding: 6px 10px; border-radius: 6px; margin-bottom: 10px; line-height: 1.4; display: flex; align-items: flex-start; gap: 6px; }
+  .note-callout svg { flex-shrink: 0; margin-top: 1px; }
+
+  /* CONTACT ROW */
+  .contact-row { padding: 8px 10px; border-radius: 7px; background: #F2F4F7; margin-bottom: 6px; }
+  .contact-row:last-child { margin-bottom: 0; }
+  .contact-name { font-size: 13px; font-weight: 600; color: #21201F; }
+  .contact-role { font-size: 11px; color: #736D68; margin-bottom: 3px; }
+  .contact-email-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .contact-email { display: inline-flex; align-items: center; gap: 4px; color: #0040E6; font-size: 12px; text-decoration: none; font-weight: 500; word-break: break-all; }
+  .contact-email:hover { text-decoration: underline; }
+  .contact-phone { display: inline-flex; align-items: center; gap: 4px; color: #736D68; font-size: 11px; text-decoration: none; margin-top: 2px; }
+  .btn-copy { background: none; border: none; cursor: pointer; color: #9D9893; padding: 2px; display: flex; align-items: center; gap: 4px; font-size: 11px; font-family: inherit; }
+  .btn-copy:hover { color: #0040E6; }
+  .btn-copy.copied { color: #007F5E; }
+
+  /* NO COVERAGE */
+  .no-coverage { max-width: 720px; margin: 0 auto; padding: 8px 24px 32px; }
+  .no-coverage-box { background: #FEF2F2; border: 1px solid #FECACA; border-radius: 10px; padding: 14px 16px; }
+  .no-coverage-title { font-size: 13px; font-weight: 600; color: #991B1B; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+  .no-coverage-list { font-size: 12px; color: #991B1B; line-height: 1.6; }
+  .no-coverage-note { font-size: 11px; color: #736D68; margin: 8px 0 0; line-height: 1.4; }
+
+  .loading { text-align: center; padding: 48px 20px; color: #9D9893; font-size: 15px; }
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+  🔧 SETUP INSTRUCTIONS:
+  
+  1. Upload the .xlsx template to Google Drive
+  2. Open it in Google Sheets
+  3. Go to: File > Share > Publish to web
+  4. Select "Contacts" sheet, choose "CSV", click Publish
+  5. Copy the URL and paste it into GOOGLE_SHEET_CSV_URL below
+  6. Host this HTML file anywhere (internal server, shared drive, etc.)
+  
+  If no URL is set, the app uses the built-in fallback data.
+============================================================ -->
+
+<div class="header">
+  <div class="header-inner">
+    <p class="header-tag">Opendoor × Securitas</p>
+    <h1>Patrol Company Contacts</h1>
+    <div class="header-meta">
+      <p class="header-stats" id="headerStats"></p>
+      <span id="sourceBadge"></span>
+      <button class="btn-refresh" id="btnRefresh" onclick="fetchSheet()" style="display:none">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        Refresh
+      </button>
+    </div>
+    <p class="header-time" id="headerTime"></p>
+    <p class="header-error" id="headerError"></p>
+  </div>
+</div>
+
+<div class="search-bar">
+  <div class="search-inner">
+    <div class="search-wrap">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9D9893" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <input class="search-input" type="text" id="searchInput" placeholder="Search market, contact name, email, or role..." oninput="renderMarkets()">
+    </div>
+    <div class="filter-btns">
+      <button class="filter-btn active" data-filter="All" onclick="setFilter(this)">All</button>
+      <button class="filter-btn" data-filter="24/7" onclick="setFilter(this)">24/7</button>
+      <button class="filter-btn" data-filter="Limited" onclick="setFilter(this)">Limited</button>
+    </div>
+  </div>
+</div>
+
+<div class="content">
+  <p class="results-count" id="resultsCount"></p>
+  <div id="marketsList"></div>
+</div>
+
+<div class="no-coverage">
+  <div class="no-coverage-box">
+    <div class="no-coverage-title">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      No Securitas Coverage Available
+    </div>
+    <div class="no-coverage-list">Asheville, NC · Birmingham, AL · Chattanooga, TN · Cleveland, OH · Corpus Christi, TX · Greenville, SC · Killeen, TX · Prescott, AZ</div>
+    <p class="no-coverage-note">For these markets: Market Ops contact law enforcement directly, then notify T&S. Other teams coordinate via alerts-security in Slack after creating an incident report.</p>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// 🔧 PASTE YOUR PUBLISHED GOOGLE SHEET CSV URL HERE:
+// ============================================================
+const GOOGLE_SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRkhSC-k3LwCj3zFpJk-tSmyQKAIF3vvLknxqrzB_KKG6X2c2KgGAR3ksxiZi31uw/pub?gid=261003292&single=true&output=csv";
+// ============================================================
+
+// SVG icon strings
+const ICONS = {
+  mail: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>',
+  phone: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>',
+  clock: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+  copy: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>',
+  chevron: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>',
+  alert: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>',
+  sheet: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>',
+};
+
+let markets = [];
+let currentFilter = "All";
+let dataSource = "local";
+
+// ============================================================
+// FALLBACK DATA
+// ============================================================
+const FALLBACK = [
+  {market:"Albuquerque, NM",coverage:"24/7",dispatch:"usmd@securitasinc.com",cc:"abq-patrols@opendoor.com",notes:"Include vicky.hawkins@securitasinc.com on patrol routes",contacts:[{name:"Ken Nead",role:"District Manager",email:"ken.nead@securitasinc.com",phone:"505-205-6208"},{name:"Vicky Hawkins",role:"Mobile Services Manager",email:"vicky.hawkins@securitasinc.com",phone:"505-645-2707"}]},
+  {market:"Atlanta, GA",coverage:"24/7",dispatch:"usmd@securitasinc.com",cc:"atlpatrols@opendoor.com",notes:"",contacts:[{name:"Pam McGee",role:"District Manager",email:"pam.mcgee@securitasinc.com",phone:"305-753-6039"}]},
+  {market:"Austin, TX",coverage:"M-F 2000-0600 & 0800-1800; Sat & Sun 2000-1500",dispatch:"usmd@securitasinc.com",cc:"atxpatrols@opendoor.com",notes:"",contacts:[{name:"Mehr Enayati",role:"District Manager",email:"mehr.enayati@securitasinc.com",phone:"512-541-6058"}]},
+  {market:"Boise, ID",coverage:"24/7",dispatch:"usmd@securitasinc.com",cc:"boi-patrols@opendoor.com",notes:"",contacts:[{name:"Allen Adams",role:"District Manager",email:"allen.adams@securitasinc.com",phone:"986-236-0918"}]},
+  {market:"Boston, MA",coverage:"24/7",dispatch:"usmd@securitasinc.com",cc:"bos-patrols@opendoor.com",notes:"",contacts:[{name:"Marc Cutler",role:"District Manager",email:"marc.cutler@securitasinc.com",phone:"857-324-5743"}]},
+  {market:"Charleston, SC",coverage:"24/7",dispatch:"usmd@securitasinc.com",cc:"chs-patrols@opendoor.com",notes:"",contacts:[{name:"Aaron Back",role:"District Manager",email:"aaron.back@securitasinc.com",phone:"843-368-5435"},{name:"Timothy Lockett",role:"Branch Manager",email:"Timothy.Lockett@securitasinc.com",phone:"843-806-4338"},{name:"Kenny Lancaster",role:"Backup (NC/SC)",email:"kenny.lancaster@securitasinc.com",phone:""}]},
+  {market:"Charlotte, NC",coverage:"24/7",dispatch:"usmd@securitasinc.com",cc:"cltpatrols@opendoor.com",notes:"",contacts:[{name:"Devante Mitchell",role:"District Manager",email:"Devante.Mitchell@securitasinc.com",phone:"919-428-7893"}]},
+  {market:"Cincinnati, OH",coverage:"M-F 1600-0700; Sat & Sun 24hr",dispatch:"usmd@securitasinc.com",cc:"cvg-patrols@opendoor.com",notes:"",contacts:[{name:"James Sherrard",role:"District Manager",email:"james.sherrard@securitasinc.com",phone:"502-830-2981"},{name:"Kurt Frulla",role:"Backup DM",email:"kurt.frulla@securitasinc.com",phone:""}]},
+  {market:"Colorado Springs, CO",coverage:"Sat-Sun 24hr; M-F 0000-0800 & 1600-0000",dispatch:"usmd@securitasinc.com",cc:"cospatrols@opendoor.com",notes:"",contacts:[{name:"Michael Parsons",role:"District Manager",email:"michael.parsons1@securitasinc.com",phone:"720-318-0591"}]},
+  {market:"Columbia, SC",coverage:"24/7",dispatch:"usmd@securitasinc.com",cc:"cubpatrols@opendoor.com",notes:"Sub-contractor: gibsontaskforce@gmail.com",contacts:[{name:"Andrea Hoepner",role:"District Manager",email:"andrea.hoepner@securitasinc.com",phone:""},{name:"Aaron Back",role:"DM Backup",email:"aaron.back@securitasinc.com",phone:""},{name:"Bryan Gibson",role:"Sub-contractor",email:"gibsontaskforce@gmail.com",phone:"803-463-4239"}]},
+  {market:"Columbus, OH",coverage:"M-Th 2000-0600; Fri 1600-0800; Sat & Sun 24/7",dispatch:"usmd@securitasinc.com",cc:"cmh-patrols@opendoor.com",notes:"",contacts:[{name:"Scott Cultice",role:"District Manager",email:"scott.cultice@securitasinc.com",phone:"380-266-3556"},{name:"Kurt Frulla",role:"DM Backup",email:"kurt.frulla@securitasinc.com",phone:"571-225-3895"}]},
+  {market:"Dallas / Ft Worth, TX",coverage:"24/7",dispatch:"usmd@securitasinc.com",cc:"dfwpatrols@opendoor.com",notes:"On patrol updates: Ftw001.securitas@gmail.com, dp001.securitas@gmail.com",contacts:[{name:"Octavio Quezada",role:"District Manager",email:"octavio.quezada@securitasinc.com",phone:"817-723-2698"},{name:"Carlos Cirilo",role:"Senior Supervisor",email:"carlos.cirilo@securitasinc.com",phone:"214-676-0793"}]},
+  {market:"Denver, CO",coverage:"24/7",dispatch:"usmd@securitasinc.com",cc:"denpatrols@opendoor.com",notes:"",contacts:[{name:"Michael Parsons",role:"District Manager",email:"michael.parsons1@securitasinc.com",phone:"720-318-0591"}]},
+  {market:"Detroit, MI",coverage:"24/7",dispatch:"usmd@securitasinc.com",cc:"detpatrols@opendoor.com",notes:"",contacts:[{name:"Trevor Trask",role:"District Manager",email:"trevor.trask@securitasinc.com",phone:""},{name:"Thomas Oley",role:"Supervisor",email:"Thomas.Oley1@securitasinc.com",phone:"440-547-4231"}]},
+  {market:"Greensboro, NC",coverage:"24/7",dispatch:"usmd@securitasinc.com",cc:"gsopatrols@opendoor.com",notes:"",contacts:[{name:"Devante Mitchell",role:"District Manager",email:"Devante.Mitchell@securitasinc.com",phone:"919-428-7893"}]},
+  {market:"Houston, TX",coverage:"24/7",dispatch:"usmd@securitasinc.com",cc:"houpatrols@opendoor.com",notes:"",contacts:[{name:"Kirk Miller",role:"District Manager",email:"Kirk.Miller@securitasinc.com",phone:"832-593-2644"},{name:"Theresa Dilworth",role:"Supervisor",email:"THERESA.DILWORTH@securitasinc.com",phone:""}]},
+  {market:"Indianapolis, IN",coverage:"Sat-Sun 1200-0700; M-F 1600-0700",dispatch:"usmd@securitasinc.com",cc:"indpatrols@opendoor.com",notes:"",contacts:[{name:"Travis Mager",role:"District Manager",email:"travis.mager@securitasinc.com",phone:"317-474-1464"}]},
+  {market:"Jacksonville, FL",coverage:"Sun-Sat 7PM-7AM",dispatch:"usmd@securitasinc.com",cc:"jaxpatrols@opendoor.com",notes:"",contacts:[{name:"Aaron Back",role:"District Manager",email:"Aaron.back@securitasinc.com",phone:"843-368-5435"},{name:"Steven Williams",role:"Supervisor",email:"jacksonvillemobilesupervisor@gmail.com",phone:""}]},
+  {market:"Kansas City, MO",coverage:"24/7",dispatch:"usmd@securitasinc.com",cc:"kcipatrols@opendoor.com",notes:"",contacts:[{name:"Robert Klostermayer",role:"District Manager",email:"Robert.klostermayer@securitasinc.com",phone:"816-225-0209"}]},
+  {market:"Knoxville, TN",coverage:"2000-0800 daily",dispatch:"usmd@securitasinc.com",cc:"knxpatrols@opendoor.com",notes:"",contacts:[{name:"Stacy Tislow",role:"District Manager",email:"stacy.tislow@securitasinc.com",phone:"629-279-1556"}]},
+  {market:"Las Vegas, NV",coverage:"24/7",dispatch:"usmd@securitasinc.com",cc:"laspatrols@opendoor.com",notes:"",contacts:[{name:"Matthew Diaz",role:"District Manager",email:"matthew.diaz@securitasinc.com",phone:"702-691-3318"},{name:"Edgar Gonzalez",role:"Supervisor",email:"Edgar.Gonzalez@securitasinc.com",phone:"725-277-5935"}]},
+  {market:"Los Angeles, CA",coverage:"OC/Northridge/Torrance/W. Covina 24/7; Bakersfield/SB/Ventura 4PM-8AM; Riverside/Ontario/Palm Desert 24/7; Victorville 8PM-4AM; Temecula 2PM-6AM",dispatch:"usmd@securitasinc.com",cc:"laxpatrols@opendoor.com, rivpatrols@opendoor.com",notes:"",contacts:[{name:"Wissam Fakhreddine",role:"District Manager",email:"wissam.fakhreddine@securitasinc.com",phone:""},{name:"Julio Gonzalez",role:"District Manager",email:"Julio.gonzalez@securitasinc.com",phone:""},{name:"Roy Cruz",role:"DM — West Covina",email:"Roy.cruz@securitasinc.com",phone:""},{name:"Charles Sunderland",role:"DM — Temecula",email:"Charles.sunderland@securitasinc.com",phone:""},{name:"Alex Valle",role:"DM — Palm Desert",email:"alex.valle@securitasinc.com",phone:""}]},
+  {market:"Miami / Fort Lauderdale, FL",coverage:"24/7",dispatch:"usmd@securitasinc.com",cc:"miapatrols@opendoor.com",notes:"",contacts:[{name:"Safana Augustine",role:"District Acct Mgr (Ft. Lauderdale)",email:"Sanfana.Augustin@securitasinc.com",phone:""},{name:"Michael Di Pietro",role:"DM — West Palm Beach",email:"Michael.Dipietro@securitasinc.com",phone:""},{name:"Carlos Berroa",role:"DM — Miami",email:"Carlos.Berroa@securitasinc.com",phone:""},{name:"Elizabeth Morales",role:"Mobile Supervisor",email:"Elizabeth.Morales@securitasinc.com",phone:"954-743-9309"}]},
+  {market:"Minneapolis / St. Paul, MN",coverage:"24/7",dispatch:"usmd@securitasinc.com",cc:"msppatrols@opendoor.com",notes:"",contacts:[{name:"Amanda Holt",role:"District Manager",email:"amanda.holt@securitasinc.com",phone:"651-396-4765"},{name:"Jason Hair",role:"Area Ops Coordinator",email:"jason.hair@securitasinc.com",phone:"763-349-3549"}]},
+  {market:"Nashville, TN",coverage:"24/7",dispatch:"usmd@securitasinc.com",cc:"naspatrols@opendoor.com",notes:"",contacts:[{name:"Stacy Tislow",role:"District Manager",email:"stacy.tislow@securitasinc.com",phone:"629-279-1556"}]},
+  {market:"New York / New Jersey",coverage:"4PM-8AM only",dispatch:"usmd@securitasinc.com",cc:"nyjpatrols@opendoor.com",notes:"",contacts:[{name:"Jason Mahoney",role:"District Manager",email:"Jason.Mahoney@securitasinc.com",phone:"201-602-9208"}]},
+  {market:"Northern Colorado",coverage:"Boulder: Fri-Sat 2000-0800, Sun-Th 2000-0600; Ft Collins: Fri-Sat 2000-0600, Sun-Th 2000-0400",dispatch:"usmd@securitasinc.com",cc:"ncopatrols@opendoor.com",notes:"",contacts:[{name:"Michael Parsons",role:"District Manager",email:"michael.parsons1@securitasinc.com",phone:"720-318-0591"}]},
+  {market:"Oklahoma City, OK",coverage:"24/7",dispatch:"usmd@securitasinc.com",cc:"okcpatrols@opendoor.com",notes:"",contacts:[{name:"Ray Self",role:"District Manager",email:"ray.self@securitasinc.com",phone:""}]},
+  {market:"Orlando, FL",coverage:"24/7",dispatch:"usmd@securitasinc.com",cc:"orlpatrols@opendoor.com",notes:"",contacts:[{name:"Pam McGee",role:"District Manager",email:"pam.mcgee@securitasinc.com",phone:"305-753-6039"},{name:"Yuly Arnold",role:"Supervisor",email:"orlandomobilesupervisor1@gmail.com",phone:""}]},
+  {market:"Phoenix, AZ",coverage:"24/7",dispatch:"usmd@securitasinc.com",cc:"phxpatrols@opendoor.com",notes:"",contacts:[{name:"Ken Nead",role:"District Manager",email:"ken.nead@securitasinc.com",phone:"505-205-6208"},{name:"Vicky Hawkins",role:"Mobile Manager",email:"vicky.hawkins@securitasinc.com",phone:"505-645-2707"}]},
+  {market:"Portland, OR",coverage:"24/7",dispatch:"usmd@securitasinc.com",cc:"pdxpatrols@opendoor.com",notes:"",contacts:[{name:"Roy Tauala",role:"District Manager",email:"roy.tauala@securitasinc.com",phone:"458-326-1774"},{name:"Moss Coley",role:"Supervisor",email:"Moss.Coley@securitasinc.com",phone:""}]},
+  {market:"Raleigh-Durham, NC",coverage:"24/7",dispatch:"usmd@securitasinc.com",cc:"rdupatrols@opendoor.com",notes:"",contacts:[{name:"Devante Mitchell",role:"District Manager",email:"Devante.Mitchell@securitasinc.com",phone:"919-428-7893"}]},
+  {market:"Reno, NV",coverage:"24/7",dispatch:"usmd@securitasinc.com",cc:"rnopatrols@opendoor.com",notes:"",contacts:[{name:"Paul Mikesell",role:"District Manager",email:"Paul.Mikesell@securitasinc.com",phone:"775-232-9102"}]},
+  {market:"Richmond, VA",coverage:"2200-0600, 7 days/week",dispatch:"usmd@securitasinc.com",cc:"rva-patrols@opendoor.com",notes:"",contacts:[{name:"Kurt Frulla",role:"District Manager",email:"Kurt.Frulla@securitasinc.com",phone:"571-225-3895"}]},
+  {market:"Sacramento / Modesto / Stockton, CA",coverage:"24/7",dispatch:"usmd@securitasinc.com",cc:"sacpatrols@opendoor.com",notes:"Include sacramento.dispatch@securitasinc.com on patrol route updates",contacts:[{name:"Alejandro Razo",role:"District Manager",email:"alejandro.razo@securitasinc.com",phone:"916-295-3073"},{name:"Monique Davis",role:"DM — Stockton",email:"monique.davis@securitasinc.com",phone:""},{name:"Charles Sunderland",role:"Backup",email:"charles.sunderland@securitasinc.com",phone:""}]},
+  {market:"Salt Lake City, UT",coverage:"24/7",dispatch:"usmd@securitasinc.com",cc:"slcpatrols@opendoor.com",notes:"",contacts:[{name:"John Fuller",role:"District Manager",email:"john.fuller@securitasinc.com",phone:"801-332-0470"}]},
+  {market:"San Antonio, TX",coverage:"24/7",dispatch:"usmd@securitasinc.com",cc:"satpatrols@opendoor.com",notes:"",contacts:[{name:"Mehr Enayati",role:"District Manager",email:"mehr.enayati@securitasinc.com",phone:"512-541-6058"}]},
+  {market:"San Diego, CA",coverage:"24/7 (Escondido / San Marcos / North-South SD)",dispatch:"usmd@securitasinc.com",cc:"sanpatrols@opendoor.com",notes:"",contacts:[{name:"Charles Sunderland",role:"District Manager",email:"charles.sunderland@securitasinc.com",phone:"760-851-8926"}]},
+  {market:"San Francisco, CA",coverage:"24/7 (Concord / Oakland / Fremont / San Jose)",dispatch:"usmd@securitasinc.com",cc:"sfo-patrols@opendoor.com",notes:"CC corey.wiltshire@securitasinc.com on dispatches",contacts:[{name:"Eduardo Fuentes",role:"District Manager",email:"eduardo.fuentes@securitasinc.com",phone:"510-301-5374"},{name:"Corey Wiltshire",role:"DM — East Bay / San Jose",email:"corey.wiltshire@securitasinc.com",phone:"408-595-2534"},{name:"Charles Sunderland",role:"Backup",email:"charles.sunderland@securitasinc.com",phone:""}]},
+  {market:"St. Louis, MO",coverage:"24/7",dispatch:"usmd@securitasinc.com",cc:"stl-patrols@opendoor.com",notes:"",contacts:[{name:"Mike Hudson",role:"District Manager",email:"mike.hudson@securitasinc.com",phone:"314-565-7606"}]},
+  {market:"Tampa, FL",coverage:"24/7",dispatch:"usmd@securitasinc.com",cc:"tpapatrols@opendoor.com",notes:"",contacts:[{name:"Pam McGee",role:"District Manager",email:"pam.mcgee@securitasinc.com",phone:"305-753-6039"},{name:"Mallory Bradley",role:"Mobile Supervisor",email:"tampamobilesupervisor@gmail.com",phone:""},{name:"Yuly Arnold",role:"Supervisor",email:"orlandomobilesupervisor1@gmail.com",phone:"407-795-0482"}]},
+  {market:"Tucson, AZ",coverage:"Mon-Tue 1800-0800; Wed-Sun 1600-0800",dispatch:"usmd@securitasinc.com",cc:"tuspatrols@opendoor.com",notes:"Include vicky.hawkins@securitasinc.com on patrol routes",contacts:[{name:"Ken Nead",role:"District Manager",email:"ken.nead@securitasinc.com",phone:"505-205-6208"},{name:"Vicky Hawkins",role:"Mobile Services Manager",email:"vicky.hawkins@securitasinc.com",phone:"505-645-2707"}]},
+  {market:"Washington, DC",coverage:"24/7",dispatch:"usmd@securitasinc.com",cc:"dc-patrols@opendoor.com",notes:"For MD locations, always add randolph.perrin@securitasinc.com",contacts:[{name:"Kurt Frulla",role:"District Manager",email:"kurt.frulla@securitasinc.com",phone:"571-225-3895"},{name:"Randolph Perrin",role:"Maryland Contact",email:"randolph.perrin@securitasinc.com",phone:"240-372-8212"}]},
+];
+
+// ============================================================
+// CSV PARSER
+// ============================================================
+function parseCSV(text) {
+  const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
+  if (lines.length < 2) return null;
+  const headers = lines[0].split(",").map(h => h.trim().replace(/^"|"$/g, "").toLowerCase());
+  const idx = (name) => headers.indexOf(name);
+  const iM = idx("market"), iCov = idx("coverage"), iDisp = idx("dispatch"), iCC = idx("cc"),
+        iN = idx("notes"), iName = idx("contactname"), iRole = idx("role"), iEmail = idx("email"), iPhone = idx("phone");
+  if (iM === -1 || iEmail === -1) return null;
+
+  function splitRow(row) {
+    const fields = []; let cur = "", inQ = false;
+    for (let i = 0; i < row.length; i++) {
+      const ch = row[i];
+      if (ch === '"') { inQ = !inQ; continue; }
+      if (ch === "," && !inQ) { fields.push(cur.trim()); cur = ""; continue; }
+      cur += ch;
+    }
+    fields.push(cur.trim());
+    return fields;
+  }
+
+  const map = new Map();
+  for (let i = 1; i < lines.length; i++) {
+    const c = splitRow(lines[i]);
+    const market = c[iM] || ""; if (!market) continue;
+    if (!map.has(market)) {
+      map.set(market, { market, coverage: (c[iCov]||"").trim(), dispatch: (c[iDisp]||"usmd@securitasinc.com").trim(), cc: (c[iCC]||"").trim(), notes: (c[iN]||"").trim(), contacts: [] });
+    }
+    const name = (c[iName]||"").trim(), email = (c[iEmail]||"").trim();
+    if (name && email) map.get(market).contacts.push({ name, role: (c[iRole]||"").trim(), email, phone: (c[iPhone]||"").trim() });
+  }
+  return [...map.values()].filter(m => m.contacts.length > 0);
+}
+
+// ============================================================
+// FETCH & RENDER
+// ============================================================
+async function fetchSheet() {
+  if (!GOOGLE_SHEET_CSV_URL) { markets = FALLBACK; dataSource = "local"; updateHeader(); renderMarkets(); return; }
+  document.getElementById("btnRefresh").textContent = "Refreshing…";
+  document.getElementById("headerError").textContent = "";
+  try {
+    const res = await fetch(GOOGLE_SHEET_CSV_URL);
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const text = await res.text();
+    const parsed = parseCSV(text);
+    if (!parsed || !parsed.length) throw new Error("Could not parse — check column headers");
+    markets = parsed; dataSource = "sheet";
+    document.getElementById("headerTime").textContent = "Last updated: " + new Date().toLocaleTimeString();
+  } catch (e) {
+    document.getElementById("headerError").textContent = "Sheet error: " + e.message + " — showing fallback data";
+    markets = FALLBACK; dataSource = "local";
+  }
+  document.getElementById("btnRefresh").innerHTML = ICONS.sheet.replace('width="14"','width="12"').replace('height="14"','height="12"') + " Refresh";
+  updateHeader(); renderMarkets();
+}
+
+function updateHeader() {
+  const total = markets.reduce((n, m) => n + m.contacts.length, 0);
+  document.getElementById("headerStats").textContent = markets.length + " markets · " + total + " contacts";
+  const badge = document.getElementById("sourceBadge");
+  if (dataSource === "sheet") {
+    badge.className = "source-badge source-live";
+    badge.innerHTML = ICONS.sheet + " Live from Google Sheet";
+    document.getElementById("btnRefresh").style.display = "flex";
+  } else if (GOOGLE_SHEET_CSV_URL) {
+    badge.className = "source-badge source-local";
+    badge.textContent = "Fallback data";
+    document.getElementById("btnRefresh").style.display = "flex";
+  } else {
+    badge.className = "source-badge source-local";
+    badge.textContent = "Built-in data — connect a Google Sheet to enable live updates";
+    document.getElementById("btnRefresh").style.display = "none";
+  }
+}
+
+function setFilter(btn) {
+  document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  currentFilter = btn.dataset.filter;
+  renderMarkets();
+}
+
+function toggleCard(id) {
+  const body = document.getElementById("body-" + id);
+  const chev = document.getElementById("chev-" + id);
+  body.classList.toggle("open");
+  chev.classList.toggle("open");
+}
+
+function copyEmail(btn, email) {
+  navigator.clipboard.writeText(email);
+  btn.classList.add("copied");
+  btn.innerHTML = ICONS.copy + " Copied!";
+  setTimeout(() => { btn.classList.remove("copied"); btn.innerHTML = ICONS.copy; }, 1500);
+}
+
+function renderMarkets() {
+  const q = (document.getElementById("searchInput").value || "").toLowerCase();
+  const filtered = markets.filter(m => {
+    const matchCov = currentFilter === "All" || (currentFilter === "24/7" && m.coverage === "24/7") || (currentFilter === "Limited" && m.coverage !== "24/7");
+    const matchQ = !q || m.market.toLowerCase().includes(q) || m.cc.toLowerCase().includes(q) || (m.notes||"").toLowerCase().includes(q) || m.contacts.some(c => c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q) || c.role.toLowerCase().includes(q));
+    return matchCov && matchQ;
+  });
+
+  document.getElementById("resultsCount").textContent = filtered.length + " market" + (filtered.length !== 1 ? "s" : "") + (q ? ' matching "' + q + '"' : "");
+
+  const container = document.getElementById("marketsList");
+  if (!filtered.length) {
+    container.innerHTML = '<div class="empty"><p>No markets match your search.</p><p>Try a different city, state, or contact name.</p></div>';
+    return;
+  }
+
+  let html = "";
+  filtered.forEach((m, i) => {
+    const is247 = m.coverage === "24/7";
+    const badgeClass = is247 ? "badge-24" : "badge-limited";
+    const badgeLabel = is247 ? "24/7" : "Limited";
+
+    html += '<div class="market-card">';
+    html += '<div class="card-header" onclick="toggleCard(' + i + ')">';
+    html += '<div><div class="card-market-name">' + esc(m.market) + '</div>';
+    html += '<div class="card-badges"><span class="badge ' + badgeClass + '">' + ICONS.clock + ' ' + badgeLabel + '</span>';
+    html += '<span class="card-count">' + m.contacts.length + ' contact' + (m.contacts.length > 1 ? 's' : '') + '</span></div></div>';
+    html += '<div class="chevron" id="chev-' + i + '">' + ICONS.chevron + '</div></div>';
+
+    html += '<div class="card-body" id="body-' + i + '">';
+    if (!is247) html += '<div class="coverage-detail"><strong>Coverage:</strong> ' + esc(m.coverage) + '</div>';
+    html += '<div class="dispatch-info">';
+    html += '<div class="dispatch-row"><span class="dispatch-label">Dispatch:</span><a href="mailto:' + esc(m.dispatch) + '">' + esc(m.dispatch) + '</a></div>';
+    html += '<div class="dispatch-row"><span class="dispatch-label">CC:</span><span>' + esc(m.cc) + '</span></div></div>';
+    if (m.notes) html += '<div class="note-callout">' + ICONS.alert + '<span>' + esc(m.notes) + '</span></div>';
+
+    m.contacts.forEach(c => {
+      html += '<div class="contact-row">';
+      html += '<div class="contact-name">' + esc(c.name) + '</div>';
+      html += '<div class="contact-role">' + esc(c.role) + '</div>';
+      html += '<div class="contact-email-row">';
+      html += '<a class="contact-email" href="mailto:' + esc(c.email) + '">' + ICONS.mail + ' ' + esc(c.email) + '</a>';
+      html += '<button class="btn-copy" onclick="copyEmail(this,\'' + esc(c.email).replace(/'/g, "\\'") + '\')">' + ICONS.copy + '</button>';
+      html += '</div>';
+      if (c.phone) html += '<a class="contact-phone" href="tel:' + esc(c.phone) + '">' + ICONS.phone + ' ' + esc(c.phone) + '</a>';
+      html += '</div>';
+    });
+    html += '</div></div>';
+  });
+  container.innerHTML = html;
+}
+
+function esc(s) { const d = document.createElement("div"); d.textContent = s; return d.innerHTML; }
+
+// Init
+fetchSheet();
+</script>
+</body>
+</html>
